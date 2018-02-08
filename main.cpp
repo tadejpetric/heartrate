@@ -14,6 +14,7 @@ namespace math {
         void shift(short value);
         bool index_in(short indx);
         short read_last();
+        short read_first();
         void remove();
     } *start;
 
@@ -82,13 +83,16 @@ namespace math {
         return temp->extreme;
     }
 
+    short ignore::read_first() {
+        return start->extreme;
+    }
+
     short max_loose(short *tab, short size, unsigned short loss) { //returns <loss>th highest value. ex: loss = 2 => returns 2nd highest value
         start->remove();
         if(!loss) {
             Serial.println("loss cannot be 0");
             return 0;
         }
-        if(loss>size) return 0;
 
         for (int i = 0; i<loss; ++i) { //create a linked list of size loss
             start->add(0, 0);
@@ -108,7 +112,7 @@ namespace math {
             }
         }
 
-        temp = start->read_last();
+        temp = start->read_first();
         start->remove();
         return temp;
     }
@@ -119,7 +123,6 @@ namespace math {
             Serial.println("loss cannot be 0");
             return 0;
         }
-        if(loss>size) return 0;
 
         for (int i = 0; i<loss; ++i) { //create a linked list of size loss
             start->add(0, 0);
@@ -139,7 +142,7 @@ namespace math {
             }
         }
 
-        temp = start->read_last();
+        temp = start->read_first();
         start->remove();
         return temp;
     }
