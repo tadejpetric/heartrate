@@ -9,9 +9,9 @@ namespace math {
         short index;
 
         ignore() { next = nullptr; }
-        ignore(short value, short neki) { next = nullptr; extreme = value; index = neki}
+        ignore(short value, short neki) { next = nullptr; extreme = value; index = neki;}
         void add(short value, short indx);
-        void shift(short value);
+        void shift(short value, short indx);
         bool index_in(short indx);
         short read_last();
         short read_first();
@@ -27,6 +27,7 @@ namespace math {
     }
 
     void ignore::remove(){
+        ignore *temp;
         if(start != nullptr) {
             while (start->next != nullptr) {
                 temp = start->next;
@@ -87,7 +88,7 @@ namespace math {
         return start->extreme;
     }
 
-    short max_loose(short *tab, short size, unsigned short loss) { //returns <loss>th highest value. ex: loss = 2 => returns 2nd highest value
+    byte max_loose(byte *tab, short size, unsigned short loss) { //returns <loss>th highest value. ex: loss = 2 => returns 2nd highest value
         start->remove();
         if(!loss) {
             Serial.println("loss cannot be 0");
@@ -98,7 +99,7 @@ namespace math {
             start->add(0, 0);
         }
 
-        short temp = tab[0];
+        byte temp = tab[0];
         short index = 0;
 
         for (unsigned int j = 0; j<loss; ++j) {
@@ -117,7 +118,7 @@ namespace math {
         return temp;
     }
 
-    short min_loose(short *tab, unsigned short size, unsigned short loss) { //see: max_loose(). Implementation for minimum
+    short min_loose(byte *tab, unsigned short size, unsigned short loss) { //see: max_loose(). Implementation for minimum
         start->remove();
         if(!loss) {
             Serial.println("loss cannot be 0");
@@ -128,7 +129,7 @@ namespace math {
             start->add(0, 0);
         }
 
-        short temp = tab[0];
+        byte temp = tab[0];
         short index = 0;
 
         for (unsigned int j = 0; j<loss; ++j) {
@@ -139,7 +140,6 @@ namespace math {
                 }
             }
             start->shift(temp, index);
-            }
         }
 
         temp = start->read_first();
@@ -149,16 +149,16 @@ namespace math {
 }
 
 class Container {
-    short branje[zamik*200]; //shranjuje za 2 sec vrednosti
+    byte branje[zamik*100]; //shranjuje za 2 sec vrednosti
     short current;
-    short nivo1;
-    short nivo2;
+    byte nivo1;
+    byte nivo2;
 public:
     Container();
     void insert(short value);
     void set_nivo(unsigned short loss = 2, short iv = 3);
-    short ret_nivo1() {return nivo1;}
-    short ret_nivo2() {return nivo2;}
+    byte ret_nivo1() {return nivo1;}
+    byte ret_nivo2() {return nivo2;}
 } meritev;
 
 Container::Container() {
@@ -178,8 +178,8 @@ void Container::insert(short value) {
 }
 
 void Container::set_nivo(unsigned short loss = 2, short iv = 3) { //iv is on how many intervals to divide the interval
-    short high = math::max_loose(branje, zamik*200, loss);
-    short low = math::min_loose(branje, zamik*200, loss);
+    byte high = math::max_loose(branje, zamik*200, loss);
+    byte low = math::min_loose(branje, zamik*200, loss);
     short dist;
     if(high > 0) {
         if(low < 0)
