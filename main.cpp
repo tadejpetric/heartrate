@@ -88,6 +88,7 @@ namespace math {
             Serial.println("loss cannot be 0");
             return 0;
         }
+        if(loss>size) return 0;
 
         for (int i = 0; i<loss; ++i) { //create a linked list of size loss
             start->add(0, 0);
@@ -118,6 +119,7 @@ namespace math {
             Serial.println("loss cannot be 0");
             return 0;
         }
+        if(loss>size) return 0;
 
         for (int i = 0; i<loss; ++i) { //create a linked list of size loss
             start->add(0, 0);
