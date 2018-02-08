@@ -167,6 +167,8 @@ Container::Container() {
 
 void Container::insert(short value) {
     branje[current] = value;
+    if(current == zamik*200-1)
+        set_nivo();
     current = (current+1)%(zamik*200);
 }
 
@@ -191,12 +193,12 @@ void Container::set_nivo(unsigned short loss = 2, short iv = 3) { //iv is on how
 }
 
 
-int getheart (byte pin) {
-    int heart=analogRead(pin);
-    if (heart > upper || heart < lower)
+short getheart (byte pin) {
+    short heart=analogRead(pin);
+    if (heart > upper || heart < lower) //if not valid range -> 0
         heart=0;
     else
-        heart -= (upper + lower) / 2;
+        heart -= (upper + lower) / 2; //if valid range -> normalize
     heart*=10;
 
     return heart;
@@ -207,7 +209,8 @@ void setup() {
 }
 
 void loop() {
+    short heart = getheart(A1); //reads heartrate from A1
+    meritev.insert(heart);
 
-    Serial.println(heart);
     delay(zamik);
 }
