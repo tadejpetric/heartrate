@@ -1,0 +1,237 @@
+#define upper 890
+#define lower 840
+#define zamik 10 //milisekund, zamik*100 = sekunda
+
+namespace math {
+    struct ignore {
+        ignore *next;
+        short extreme;
+        short index;
+
+        ignore() { next = nullptr; }
+        ignore(short value, short neki) { next = nullptr; extreme = value; index = neki;}
+        void add(short value, short indx);
+        void shift(short value, short indx);
+        bool index_in(short indx);
+        short read_last();
+        short read_first();
+        void remove();
+    } *start;
+
+    void ignore::add(short value, short indx) {
+        ignore *temp = start;
+        if(!temp) {
+            temp = new ignore(value, indx);
+            return;
+        }
+        while (temp->next != nullptr) {
+            temp = temp->next;
+        }
+        temp->next = new ignore(value, indx);
+    }
+
+    void ignore::remove(){
+        ignore *temp;
+        if(start != nullptr) {
+            while (start->next != nullptr) {
+                temp = start->next;
+                while (temp->next != nullptr) {
+                    temp = temp->next;
+                }
+                delete temp;
+            }
+        delete start;
+        }
+    }
+
+    void ignore::shift(short value, short indx) { //shifts all values to the right. Inserts value at the start, deletes last value
+        if(!start) return;
+        ignore *temp = start;
+        short prev = start->extreme;
+        short prevx = start->index;
+        start->extreme = value;
+        start->index = indx;
+        short next;
+        short nextx;
+
+        while(temp->next != 0) {
+            temp = temp->next;
+
+            next = temp->extreme;
+            nextx = temp->index;
+
+            temp->extreme = prev;
+            temp->index = prevx;
+
+            next = prev;
+            nextx = prevx;
+        }
+        temp->extreme = next;
+        temp->index = nextx;
+    }
+
+    bool ignore::index_in(short indx) {
+        ignore *temp = start;
+        while (!temp) {
+            if(temp->index == indx) return true;
+            temp = temp->next;
+        }
+        return false;
+    }
+
+    short ignore::read_last() {
+        if(!start) return 0;
+        ignore *temp = start;
+        while(temp->next != nullptr) {
+            temp = temp->next;
+        }
+        return temp->extreme;
+    }
+
+    short ignore::read_first() {
+        return start->extreme;
+    }
+
+    byte max_loose(byte *tab, short size, unsigned short loss) { //returns <loss>th highest value. ex: loss = 2 => returns 2nd highest value
+        start->remove();
+        if(!loss) {
+            Serial.println("loss cannot be 0");
+            return 0;
+        }
+        
+        for (int i = 0; i<loss; ++i) { //create a linked list of size loss
+            start->add(0, 0);
+            //Serial.println("mema");
+        }
+        //Serial.println("asd");
+        
+        byte temp = tab[0];
+        short index = 0;
+
+        for (unsigned int j = 0; j<loss; ++j) {
+            for (int i = 0; i<size; ++i) {
+                if (tab[i]>temp && !start->index_in(i)) {
+                    temp = tab[i];
+                    index = i;
+                }
+            }
+            start->shift(temp, index);
+            //Serial.println("shift");
+        }
+
+        temp = start->read_first();
+        start->remove();
+        Serial.println(temp);
+        return temp;
+    }
+
+    short min_loose(byte *tab, unsigned short size, unsigned short loss) { //see: max_loose(). Implementation for minimum
+        start->remove();
+        if(!loss) {
+            Serial.println("loss cannot be 0");
+            return 0;
+        }
+
+        for (int i = 0; i<loss; ++i) { //create a linked list of size loss
+            start->add(0, 0);
+        }
+
+        byte temp = tab[0];
+        short index = 0;
+
+        for (unsigned int j = 0; j<loss; ++j) {
+            for (int i = 0; i<size; ++i) {
+                if (tab[i]<temp && !start->index_in(i)) {
+                    temp = tab[i];
+                    index = i;
+                }
+            }
+            start->shift(temp, index);
+        }
+
+        temp = start->read_first();
+        start->remove();
+        return temp;
+    }
+}
+
+class Container {
+    byte branje[zamik*100]; //shranjuje za 2 sec vrednosti
+    short current;
+    byte nivo1;
+    byte nivo2;
+public:
+    Container();
+    short ret_current() {return current;}
+    void insert(short value);
+    void set_nivo(unsigned short loss = 2, short iv = 3);
+    byte ret_nivo1() {return nivo1;}
+    byte ret_nivo2() {return nivo2;}
+    byte ret_branje(short i) {return branje[i];}
+
+} meritev;
+
+Container::Container() {
+    for (int i = 0; i < zamik*100; ++i)
+        branje[i] = 0;
+    current = 0;
+
+    nivo1 = 0;
+    nivo2 = (upper - lower) * 5;
+}
+
+void Container::insert(short value) {
+    branje[current] = value;
+    if(current == zamik*100-1)
+        set_nivo();
+    current = (current+1)%(zamik*100);
+}
+
+void Container::set_nivo(unsigned short loss = 2, short iv = 3) { //iv is on how many intervals to divide the interval
+    byte high = math::max_loose(branje, zamik*100, loss);
+    byte low = math::min_loose(branje, zamik*100, loss);
+    short dist;
+    if(high > 0) {
+        if(low < 0)
+            dist = (high-low)/iv;
+        else
+            dist = (high+low)/iv;
+    }
+    else {
+        if(low < 0)
+            dist = (-high-low)/iv;
+        else
+            dist = (-high+low)/iv;
+    }
+    nivo2 = high - dist;
+    nivo1 = low + dist;
+}
+
+
+short getheart (byte pin) {
+    short heart=analogRead(pin);
+    if (heart > upper || heart < lower) //if not valid range -> 0
+        heart=0;
+    else
+        heart -= (upper + lower) / 2; //if valid range -> normalize
+    //heart*=10;
+
+    return heart;
+}
+
+void setup() {
+    Serial.begin(115200);
+}
+
+void loop() {
+    short heart = getheart(A1); //reads heartrate from A1
+    meritev.insert(heart);
+    //Serial.println(meritev.ret_nivo1());
+    //Serial.println(meritev.ret_nivo2());
+    meritev.ret_branje(meritev.ret_current());
+    Serial.println(meritev.ret_branje(meritev.ret_current()-1));
+    //Serial.println(analogRead(A1));
+    delay(zamik);
+
+    
+}
