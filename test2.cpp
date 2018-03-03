@@ -1,30 +1,67 @@
 #define upper 890
 #define lower 840
-#define zamik 10 //milisekund, zamik*100 = sekunda
+#define zamik 25 //milisekund, zamik*10 = sekunda
+#define ROW 5
+#define mult 20
 
-byte maxx(byte arr[zamik*10]) {
+int bpmcount(byte arr[mult*zamik], byte nivo1, byte nivo2, unsigned long cas) {
+
+    int cur = 0;
+    bool pos = false;
+    int count = 0;
+    bool test;
+    
+    while (cur < mult*zamik-ROW) {
+        if(pos) {
+            test = false;
+            for (int i = cur; i<cur+ROW; ++i) {
+                if (arr[i]>nivo2)
+                    test = true;
+            }
+        }
+        else {
+            test = true;
+            for (int i = cur; i<cur+ROW; ++i) {
+                if (arr[i]<nivo1)
+                    test = false;
+            }
+        }
+        if(test != pos) {
+            ++count;
+            pos = test;
+        }
+        ++cur;
+    }
+    cas = (millis()-cas)/1000;
+    Serial.println(cas);
+    return count*cas/60;
+}
+
+byte maxx(byte arr[zamik*mult]) {
     byte tempy = arr[0];
-    for (int i = 0; i<zamik*10; ++i)
+    for (int i = 0; i<zamik*mult; ++i)
         if (arr[i]>tempy) tempy = arr[i];
     return tempy;
 }
 
-byte minn(byte arr[zamik*10]) {
+byte minn(byte arr[zamik*mult]) {
     byte tempy = arr[0];
-    for (int i = 0; i<zamik*10; ++i)
+    for (int i = 0; i<zamik*mult; ++i)
         if (arr[i]<tempy) tempy = arr[i];
     return tempy;
 }
 
 class Container {
-    byte branje[zamik*100]; //shranjuje za 2 sec vrednosti
+    byte branje[zamik*mult]; //shranjuje za 2 sec vrednosti
     short current;
     byte nivo1;
     byte nivo2;
+    unsigned long cas;
+    int bpm;
 public:
     Container();
     short ret_current() {return current;}
-    void insert(short value);
+    int insert(short value);
     void set_nivo(unsigned short loss = 2, short iv = 3);
     byte ret_nivo1() {return nivo1;}
     byte ret_nivo2() {return nivo2;}
@@ -33,7 +70,7 @@ public:
 } meritev;
 
 Container::Container() {
-    for (int i = 0; i < zamik*100; ++i)
+    for (int i = 0; i < zamik*mult; ++i)
         branje[i] = 0;
     current = 0;
 
@@ -41,17 +78,22 @@ Container::Container() {
     nivo2 = (upper - lower) * 5;
 }
 
-void Container::insert(short value) {
+int Container::insert(short value) {
     branje[current] = value;
     //Serial.println(branje[current]);
-    if(current == zamik*100-1)
+    if(current == zamik*mult-1)
+        {
         set_nivo();
-    current = (current+1)%(zamik*100);
+        bpm = bpmcount(branje, nivo1, nivo2, cas);
+        cas = millis();
+        }
+    current = (current+1)%(zamik*mult);
+    return bpm;
 }
 
 void Container::set_nivo(unsigned short loss = 2, short iv = 3) { //iv is on how many intervals to divide the interval
-    //byte high = math::max_loose(branje, zamik*100, loss);
-    //byte low = math::min_loose(branje, zamik*100, loss);
+    //byte high = math::max_loose(branje, zamik*mult, loss);
+    //byte low = math::min_loose(branje, zamik*mult, loss);
     byte high = maxx(branje);
     byte low = minn(branje);
     //Serial.println(high);
@@ -74,13 +116,17 @@ void Container::set_nivo(unsigned short loss = 2, short iv = 3) { //iv is on how
 }
 
 
+/*int Container::bpm() {
+     return bpmcount(branje, nivo1, nivo2);
+}*/
+
 short getheart (byte pin) {
     short heart=analogRead(pin);
     if (heart > upper || heart < lower) //if not valid range -> 0
         heart=0;
     else
         heart -= (upper + lower) / 2; //if valid range -> normalize
-    //heart*=10;
+    //heart*=mult;
 
     return heart;
 }
@@ -91,13 +137,13 @@ void setup() {
 
 void loop() {
     short heart = getheart(A1); //reads heartrate from A1
-    meritev.insert(heart);
-    Serial.println(meritev.ret_nivo1());
-    Serial.println(meritev.ret_nivo2());
+    Serial.println(meritev.insert(heart));
+    //Serial.println(meritev.ret_nivo1());
+    //Serial.println(meritev.ret_nivo2());
     //Serial.println(meritev.ret_branje(meritev.ret_current()-1));
     //Serial.println(heart);
-    
+    //Serial.println(int(meritev.bpm()*60.0/15.0));
+    //Serial.println(meritev.bpm());
+    //Serial.println(heart);
     delay(zamik);
-
-    
 }
