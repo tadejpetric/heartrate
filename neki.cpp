@@ -7,7 +7,7 @@
 #include <SoftwareSerial.h>
 SoftwareSerial BTserial(8, 9); // RX, TX
 
-int bpmcount(byte arr[mult*zamik], byte nivo1, byte nivo2, unsigned long cas) {
+int bpmcount(byte arr[mult*zamik], byte nivo1, byte nivo2, unsigned long cas) { //steje utripe iz arraya
 
     int cur = 0;
     bool pos = false;
@@ -38,21 +38,21 @@ int bpmcount(byte arr[mult*zamik], byte nivo1, byte nivo2, unsigned long cas) {
     return count*(60.0/((millis()-cas)/1000.0)/2);
 }
 
-byte maxx(byte arr[zamik*mult]) {
+byte maxx(byte arr[zamik*mult]) {       //najvisje vrednosti v arrayu
     byte tempy = arr[0];
     for (int i = 0; i<zamik*mult; ++i)
         if (arr[i]>tempy) tempy = arr[i];
     return tempy;
 }
 
-byte minn(byte arr[zamik*mult]) {
+byte minn(byte arr[zamik*mult]) {       //najnizje vrednosti v arrayu
     byte tempy = arr[0];
     for (int i = 0; i<zamik*mult; ++i)
         if (arr[i]<tempy) tempy = arr[i];
     return tempy;
 }
 
-class Container {
+class Container {       //class s vsemi funkcijami & spremenljivkami
     byte branje[zamik*mult]; //shranjuje za 2 sec vrednosti
     short current;
     byte nivo1;
@@ -70,7 +70,7 @@ public:
 
 } meritev;
 
-Container::Container() {
+Container::Container() {        //nastavljanje začetnih vrednosti
     for (int i = 0; i < zamik*mult; ++i)
         branje[i] = 0;
     current = 0;
@@ -79,7 +79,7 @@ Container::Container() {
     nivo2 = (upper - lower) * 5;
 }
 
-int Container::insert(short value) {
+int Container::insert(short value) {        //rekalibracija nivojev intervala
     branje[current] = value;
     //Serial.println(branje[current]);
     if(current == zamik*mult-1)
@@ -94,7 +94,7 @@ int Container::insert(short value) {
     return bpm;
 }
 
-void Container::set_nivo(unsigned short loss = 2, short iv = 3) { //iv is on how many intervals to divide the interval
+void Container::set_nivo(unsigned short loss = 2, short iv = 3) { //naredi tretjine iz arraya
     //byte high = math::max_loose(branje, zamik*mult, loss);
     //byte low = math::min_loose(branje, zamik*mult, loss);
     byte high = maxx(branje);
@@ -123,7 +123,7 @@ void Container::set_nivo(unsigned short loss = 2, short iv = 3) { //iv is on how
      return bpmcount(branje, nivo1, nivo2);
 }*/
 
-short getheart (byte pin) {
+short getheart (byte pin) {         //bere vrednost senzorja in filtera nerelavantne podatke (spikes ipd)
     short heart=analogRead(pin);
     if (heart > upper || heart < lower) //if not valid range -> 0
         heart=0;
@@ -153,3 +153,4 @@ void loop() {
     //BTserial.println(heart);
     delay(zamik);
 }
+//@ŽSM
