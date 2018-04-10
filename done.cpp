@@ -10,7 +10,6 @@ struct timr {
 } inst;
 
 
-//method 1
 struct bar {
   unsigned long arr[arsize];
   byte cur_bar;
@@ -47,7 +46,7 @@ void setup() {
   Serial.begin(9600);
 }
 
-// The Main Loop Function
+
 void loop() {
 
   heart = analogRead(A0);
